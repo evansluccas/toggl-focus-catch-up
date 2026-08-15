@@ -17,6 +17,7 @@ import {
   scheduleRows,
   type ParsedRow,
 } from "./parse";
+import ImportWizard from "./ImportWizard";
 
 const UNASSIGNED = "__none__";
 
@@ -28,10 +29,12 @@ export default function CatchUp({
   onDone: (summary: { minutes: number; clients: number; amount: number }) => void;
 }) {
   const { commitWeek } = useStore();
-  const [step, setStep] = useState<"input" | "review">("input");
+  const [step, setStep] = useState<"input" | "import" | "review">("input");
   const [text, setText] = useState(SAMPLE_WEEK);
   const [rows, setRows] = useState<ParsedRow[]>([]);
   const [rates, setRates] = useState<Record<string, string>>({});
+  /** set when the week arrived via CSV rather than paste */
+  const [source, setSource] = useState<string | null>(null);
 
   /** every detected client — drives the per-row dropdown */
   const clients = useMemo(() => clientsIn(rows), [rows]);
@@ -68,6 +71,7 @@ export default function CatchUp({
 
   const handleParse = () => {
     setRows(parseWeek(text));
+    setSource(null);
     setStep("review");
   };
 
@@ -107,6 +111,19 @@ export default function CatchUp({
     });
   };
 
+  if (step === "import") {
+    return (
+      <ImportWizard
+        onCancel={() => setStep("input")}
+        onMapped={(mapped, fileName) => {
+          setRows(mapped);
+          setSource(fileName);
+          setStep("review");
+        }}
+      />
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
       <div
@@ -142,10 +159,12 @@ export default function CatchUp({
             text={text}
             setText={setText}
             onContinue={handleParse}
+            onImport={() => setStep("import")}
           />
         ) : (
           <ReviewStep
             rows={rows}
+            source={source}
             clients={clients}
             ratedClients={ratedClients}
             rates={rates}
@@ -171,10 +190,12 @@ function InputStep({
   text,
   setText,
   onContinue,
+  onImport,
 }: {
   text: string;
   setText: (v: string) => void;
   onContinue: () => void;
+  onImport: () => void;
 }) {
   const lineCount = text.split("\n").filter((l) => l.trim()).length;
 
@@ -215,9 +236,12 @@ function InputStep({
       <div className="flex shrink-0 items-center gap-3 border-t border-line px-6 py-4">
         <p className="flex-1 text-xs text-fg-2">
           Coming from Harvest, Clockify or another tracker?{" "}
-          <span className="text-accent underline-offset-2 hover:underline">
+          <button
+            onClick={onImport}
+            className="cursor-pointer text-accent underline-offset-2 transition-colors hover:text-accent-hover hover:underline"
+          >
             Import a CSV instead
-          </span>
+          </button>
         </p>
         <Button variant="accent" onClick={onContinue} disabled={!lineCount}>
           Continue
@@ -231,6 +255,7 @@ function InputStep({
 
 function ReviewStep({
   rows,
+  source,
   clients,
   ratedClients,
   rates,
@@ -245,6 +270,7 @@ function ReviewStep({
   onConfirm,
 }: {
   rows: ParsedRow[];
+  source: string | null;
   clients: string[];
   ratedClients: string[];
   rates: Record<string, string>;
@@ -280,12 +306,20 @@ function ReviewStep({
           {ratedClients.length === 1 ? "client" : "clients"}. Fix anything that
           looks wrong — then tell us what these clients are worth.
         </p>
-        {unreadable > 0 && (
-          <p className="mt-2 inline-flex items-center gap-1.5 rounded bg-warning-fg/10 px-2 py-1 text-xs text-warning-fg">
-            {unreadable} {unreadable === 1 ? "line" : "lines"} we couldn't fully
-            read — marked below
-          </p>
-        )}
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          {source && (
+            <span className="inline-flex items-center gap-1.5 rounded bg-muted px-2 py-1 text-xs text-accent">
+              <Icon name="folder" size={11} />
+              From {source}
+            </span>
+          )}
+          {unreadable > 0 && (
+            <span className="inline-flex items-center gap-1.5 rounded bg-warning-fg/10 px-2 py-1 text-xs text-warning-fg">
+              {unreadable} {unreadable === 1 ? "line" : "lines"} we couldn't
+              fully read — marked below
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="flex min-h-0 flex-1 gap-6 overflow-hidden px-6 pb-4">

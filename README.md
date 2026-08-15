@@ -33,11 +33,35 @@ All sidebar destinations are routed and rendered:
 - `/timeline` — capacity lanes per person
 - `/members`, `/approvals`, `/time-off` — including the real empty/upsell states
 
+## Catch Up — the feature
+
+The calendar's empty state is the entry point. One box takes whatever the freelancer has —
+spreadsheet rows, notes, or typing from memory — and the parser copes with mixed durations
+(`3h`, `1.5`, `09:00-12:30`, `45m`), inconsistent client casing, and tabs from a spreadsheet.
+Lines it can't confidently read are flagged rather than guessed at.
+
+The review step is where the value lands: confirm the week, then set what each client is worth.
+**The rate is asked for at the moment it turns into money, not during onboarding** — the billable
+total updates live as you type. Skip it and you still get hours grouped by client.
+
+Confirming writes real state: the calendar fills, the Logged bar moves, projects are created with
+their clients and rates, and Reports goes from "No logged time · $0.00" to real numbers.
+
+### Two on-ramps, one payoff
+
+"Import a CSV instead" opens a replica of Toggl's existing Universal CSV Importer (upload → choose
+entity → map columns), which today is buried in Admin settings → Data import. It accepts a real
+`.csv` drop or a bundled sample Harvest export, auto-guesses the column mapping, and then hands off
+to the **same review step** — because Toggl's importer has no concept of a rate, so on its own it
+still lands you on $0.00.
+
 ## What actually works
 
+- The whole Catch Up flow, both on-ramps, including file drop and column mapping.
 - The running timer ticks, and **Stop** commits a real entry (totals, calendar, reports all update).
 - **Start** begins a new entry; the play button on any list row restarts that entry.
 - The calendar view switcher, the Tasks list/board switcher, and task checkboxes all work.
+- **Reset demo** (sidebar footer) returns to the first-run state — handy for re-recording.
 - Buttons that lead outside the replicated surface (filters, export, settings) are intentionally inert.
 
 ## Design system reference
