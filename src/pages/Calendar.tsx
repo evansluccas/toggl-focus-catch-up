@@ -465,10 +465,23 @@ function TimesheetView({
 
 /* ---------------- empty state: the Catch Up invitation ---------------- */
 
-function CatchUpInvite({ onStart }: { onStart: () => void }) {
+function CatchUpInvite({
+  onStart,
+  onDismiss,
+}: {
+  onStart: () => void;
+  onDismiss: () => void;
+}) {
   return (
     <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center p-6">
-      <div className="pointer-events-auto w-full max-w-md rounded-xl border border-line-2 bg-surface-2 p-6 text-center shadow-2xl">
+      <div className="pointer-events-auto relative w-full max-w-md rounded-xl border border-line-2 bg-surface-2 p-6 text-center shadow-2xl">
+        <button
+          onClick={onDismiss}
+          aria-label="Dismiss"
+          className="absolute top-3 right-3 inline-flex size-7 items-center justify-center rounded-lg text-fg-3 transition-colors hover:bg-white/8 hover:text-fg"
+        >
+          <Icon name="x" size={12} />
+        </button>
         <div className="mx-auto mb-4 flex size-11 items-center justify-center rounded-full bg-muted">
           <Icon name="sparkles" size={20} className="text-accent" />
         </div>
@@ -482,7 +495,13 @@ function CatchUpInvite({ onStart }: { onStart: () => void }) {
         <Button variant="accent" className="mt-5 w-full" onClick={onStart}>
           Catch up my week
         </Button>
-        <p className="mt-3 text-xs text-fg-3">
+        <button
+          onClick={onDismiss}
+          className="mt-3 text-xs text-fg-2 underline-offset-2 transition-colors hover:text-fg hover:underline"
+        >
+          I'll start from now instead
+        </button>
+        <p className="mt-2 text-xs text-fg-3">
           Takes about a minute. Nothing to connect.
         </p>
       </div>
@@ -496,6 +515,7 @@ export default function CalendarPage() {
   const { entries, running, elapsed, projectById, hasData } = useStore();
   const [view, setView] = useState("calendar");
   const [catchUpOpen, setCatchUpOpen] = useState(false);
+  const [inviteDismissed, setInviteDismissed] = useState(false);
   const [summary, setSummary] = useState<{
     minutes: number;
     clients: number;
@@ -525,7 +545,8 @@ export default function CalendarPage() {
     .reduce((s, e) => s + durationMinutes(e), 0);
 
   const capacity = 40 * 60;
-  const showInvite = !hasData && !running;
+  // Dismissible: an empty week must never be a wall. The toolbar keeps the way back.
+  const showInvite = !hasData && !running && !inviteDismissed;
 
   return (
     <>
@@ -542,11 +563,9 @@ export default function CalendarPage() {
         <IconButton name="chevronRight" aria-label="Next period" />
 
         <div className="ml-auto flex items-center gap-2">
-          {hasData && (
-            <Button icon="sparkles" onClick={() => setCatchUpOpen(true)}>
-              Catch up
-            </Button>
-          )}
+          <Button icon="sparkles" onClick={() => setCatchUpOpen(true)}>
+            Catch up
+          </Button>
           <Button trailingIcon="chevronDown">Week</Button>
           <SegmentedIcons options={VIEWS} value={view} onChange={setView} />
           <IconButton name="gear" aria-label="Calendar settings" />
@@ -700,7 +719,12 @@ export default function CalendarPage() {
           <TimesheetView entries={entries} projectById={projectById} />
         )}
 
-        {showInvite && <CatchUpInvite onStart={() => setCatchUpOpen(true)} />}
+        {showInvite && (
+          <CatchUpInvite
+            onStart={() => setCatchUpOpen(true)}
+            onDismiss={() => setInviteDismissed(true)}
+          />
+        )}
       </div>
 
       {catchUpOpen && (

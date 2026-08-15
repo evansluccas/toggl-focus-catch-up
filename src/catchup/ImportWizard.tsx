@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon, type IconName } from "../icons";
 import { Button, cx } from "../components/ui";
 import {
@@ -34,10 +34,14 @@ const FIELDS: { key: keyof Mapping; label: string; core: boolean }[] = [
 ];
 
 export default function ImportWizard({
-  onCancel,
+  onBack,
+  onClose,
   onMapped,
 }: {
-  onCancel: () => void;
+  /** return to the paste step we came from */
+  onBack: () => void;
+  /** leave Catch Up entirely */
+  onClose: () => void;
   onMapped: (rows: ParsedRow[], fileName: string) => void;
 }) {
   const [stage, setStage] = useState<"upload" | "entity" | "map">("upload");
@@ -71,22 +75,35 @@ export default function ImportWizard({
   const dots = ["upload", "entity", "map"];
   const activeDot = stage === "upload" ? 0 : stage === "entity" ? 1 : 1;
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       <div className="flex max-h-full w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-line bg-surface shadow-2xl">
         {/* header: back + step dots, as Toggl has it */}
         <div className="flex shrink-0 items-center px-6 pt-5">
-          {stage === "upload" ? (
-            <span className="w-20" />
-          ) : (
-            <button
-              onClick={() => setStage(stage === "map" ? "entity" : "upload")}
-              className="inline-flex w-20 items-center gap-1 text-xs font-semibold tracking-wide text-fg-2 uppercase transition-colors hover:text-fg"
-            >
-              <Icon name="chevronLeft" size={12} />
-              Back
-            </button>
-          )}
+          <button
+            onClick={() =>
+              stage === "upload"
+                ? onBack()
+                : setStage(stage === "map" ? "entity" : "upload")
+            }
+            className="inline-flex w-20 items-center gap-1 text-xs font-semibold tracking-wide text-fg-2 uppercase transition-colors hover:text-fg"
+          >
+            <Icon name="chevronLeft" size={12} />
+            Back
+          </button>
           <div className="flex flex-1 items-center justify-center gap-2">
             {dots.map((d, i) => (
               <span
@@ -100,7 +117,7 @@ export default function ImportWizard({
           </div>
           <div className="flex w-20 justify-end">
             <button
-              onClick={onCancel}
+              onClick={onClose}
               aria-label="Close"
               className="inline-flex size-7 items-center justify-center rounded-lg text-fg-2 transition-colors hover:bg-white/8 hover:text-fg"
             >
@@ -275,7 +292,7 @@ export default function ImportWizard({
             </div>
 
             <div className="flex shrink-0 justify-end gap-3 border-t border-line px-6 py-4">
-              <Button onClick={onCancel}>Cancel</Button>
+              <Button onClick={onClose}>Cancel</Button>
               <Button variant="accent" onClick={() => setStage("map")}>
                 Next
               </Button>
@@ -292,7 +309,7 @@ export default function ImportWizard({
             setMatchExisting={setMatchExisting}
             showMore={showMore}
             setShowMore={setShowMore}
-            onCancel={onCancel}
+            onClose={onClose}
             onContinue={() => onMapped(csvToRows(csv, mapping), csv.name)}
           />
         )}
@@ -309,7 +326,7 @@ function MapColumns({
   setMatchExisting,
   showMore,
   setShowMore,
-  onCancel,
+  onClose,
   onContinue,
 }: {
   csv: Csv;
@@ -319,7 +336,7 @@ function MapColumns({
   setMatchExisting: (v: boolean) => void;
   showMore: boolean;
   setShowMore: (v: boolean) => void;
-  onCancel: () => void;
+  onClose: () => void;
   onContinue: () => void;
 }) {
   const visible = useMemo(
@@ -403,7 +420,7 @@ function MapColumns({
         <p className="flex-1 text-xs text-fg-2">
           Next you'll confirm the week and set what each client is worth.
         </p>
-        <Button onClick={onCancel}>Cancel</Button>
+        <Button onClick={onClose}>Cancel</Button>
         <Button variant="accent" disabled={!ready} onClick={onContinue}>
           Save &amp; continue
         </Button>

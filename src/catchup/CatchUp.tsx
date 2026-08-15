@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../icons";
 import { Button, cx } from "../components/ui";
 import { useStore, type CommitEntry } from "../store";
@@ -69,6 +69,14 @@ export default function CatchUp({
 
   const unreadable = rows.filter((r) => r.needsAttention).length;
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
   const handleParse = () => {
     setRows(parseWeek(text));
     setSource(null);
@@ -114,7 +122,8 @@ export default function CatchUp({
   if (step === "import") {
     return (
       <ImportWizard
-        onCancel={() => setStep("input")}
+        onBack={() => setStep("input")}
+        onClose={onClose}
         onMapped={(mapped, fileName) => {
           setRows(mapped);
           setSource(fileName);
@@ -125,7 +134,12 @@ export default function CatchUp({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       <div
         className={cx(
           "flex max-h-full w-full flex-col overflow-hidden rounded-xl border border-line bg-surface shadow-2xl",
