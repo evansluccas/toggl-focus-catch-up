@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catch Up — Toggl Focus</title>
+<style>
+  :root{
+    --ground:#131213; --raised:#1C1A1C; --ink:#fff; --muted:#B3B0B2; --faint:#827F81;
+    --rule:#3C393B; --accent:#C282B9; --accent-soft:#371F34; --money:#9DCC9F; --flag:#F3C26A;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--ground); color:var(--ink); font-family:var(--sans);
+    overflow:hidden; -webkit-font-smoothing:antialiased;
+  }
+
+  /* progress */
+  #bar{position:fixed;top:0;left:0;height:2px;background:var(--accent);width:0;transition:width .35s ease;z-index:10}
+
+  .slide{
+    position:absolute; inset:0; display:none;
+    flex-direction:column; justify-content:center;
+    padding:clamp(3rem,7vw,7rem); gap:clamp(1rem,2.2vh,2rem);
+  }
+  .slide.on{display:flex; animation:in .38s ease both}
+  @keyframes in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.slide.on{animation:none}#bar{transition:none}}
+
+  .eyebrow{
+    font-family:var(--mono); font-size:clamp(.72rem,1.15vw,.95rem);
+    letter-spacing:.16em; text-transform:uppercase; color:var(--accent); margin:0;
+  }
+  h1{
+    font-size:clamp(2.6rem,7.5vw,6rem); line-height:1.02; letter-spacing:-.038em;
+    font-weight:700; margin:0; text-wrap:balance;
+  }
+  h2{
+    font-size:clamp(2rem,5vw,3.9rem); line-height:1.08; letter-spacing:-.03em;
+    font-weight:660; margin:0; max-width:22ch; text-wrap:balance;
+  }
+  .lede{
+    font-size:clamp(1.15rem,2.2vw,1.9rem); line-height:1.45; color:var(--muted);
+    margin:0; max-width:44ch; text-wrap:pretty;
+  }
+  .byline{font-family:var(--mono); font-size:clamp(.8rem,1.3vw,1.05rem); color:var(--faint); margin:0}
+
+  ul{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:clamp(.6rem,1.5vh,1.15rem)}
+  li{
+    font-size:clamp(1.05rem,2vw,1.7rem); line-height:1.35; color:var(--ink);
+    padding-left:1.5rem; position:relative; max-width:46ch; text-wrap:pretty;
+  }
+  li::before{
+    content:""; position:absolute; left:0; top:.62em;
+    width:.5rem; height:.5rem; border-radius:99px; background:var(--accent);
+  }
+  li.out{color:var(--muted)}
+  li.out::before{background:var(--faint)}
+  li em{font-style:normal; color:var(--muted)}
+  li b{font-weight:640}
+
+  /* the numbers strip */
+  .nums{display:flex; flex-wrap:wrap; gap:1px; background:var(--rule); border:1px solid var(--rule); border-radius:12px; overflow:hidden}
+  .num{background:var(--raised); padding:clamp(.9rem,2vw,1.5rem) clamp(1.1rem,2.4vw,2rem); flex:1 1 8rem}
+  .num .k{font-family:var(--mono); font-size:clamp(.62rem,1vw,.8rem); letter-spacing:.12em; text-transform:uppercase; color:var(--faint); display:block}
+  .num .v{font-size:clamp(1.5rem,3.4vw,2.8rem); font-weight:680; letter-spacing:-.02em; display:block; margin-top:.3rem; font-variant-numeric:tabular-nums}
+  .v.zero{color:var(--faint)} .v.good{color:var(--money)}
+
+  .quote{
+    border-left:4px solid var(--accent); background:var(--accent-soft);
+    border-radius:0 12px 12px 0; padding:clamp(1.1rem,2.4vw,2rem);
+    font-size:clamp(1.2rem,2.6vw,2.2rem); line-height:1.3; max-width:26ch; text-wrap:balance;
+  }
+
+  .links{font-family:var(--mono); font-size:clamp(.95rem,1.8vw,1.4rem); color:var(--accent); display:flex; flex-direction:column; gap:.6rem}
+
+  /* chrome */
+  #count{position:fixed; left:clamp(1rem,2.4vw,2.2rem); bottom:clamp(1rem,2.4vw,2.2rem);
+    font-family:var(--mono); font-size:.8rem; color:var(--faint); font-variant-numeric:tabular-nums; z-index:10}
+  /* top-right so the speaker cue bar can never cover it */
+  #clock{position:fixed; right:clamp(1rem,2.4vw,2.2rem); top:clamp(1rem,2.4vw,2.2rem);
+    font-family:var(--mono); font-size:.85rem; color:var(--faint); font-variant-numeric:tabular-nums; z-index:30; display:none}
+  #clock.on{display:block}
+  #clock.over{color:var(--flag)}
+
+  #cue{position:fixed; left:0; right:0; bottom:0; z-index:20; display:none;
+    background:#000; border-top:1px solid var(--rule); padding:.85rem clamp(1rem,2.4vw,2.2rem);
+    font-family:var(--mono); font-size:.9rem; color:var(--muted); gap:1.2rem; align-items:baseline}
+  #cue.on{display:flex}
+  #cue .t{color:var(--accent); flex:none; font-variant-numeric:tabular-nums}
+  #cue .c{color:var(--muted)}
+
+  #hint{position:fixed; right:clamp(1rem,2.4vw,2.2rem); top:clamp(1rem,2.4vw,2.2rem);
+    font-family:var(--mono); font-size:.7rem; color:var(--faint); opacity:.5; z-index:10}
+</style>
+</head>
+<body>
+
+<div id="bar"></div>
+
+<!-- 1 -->
+<section class="slide" data-t="0:00" data-cue="Open on your REAL Toggl account, not this deck. Reports, empty. Say: I signed up and did everything it asked.">
+  <p class="eyebrow">Toggl Focus · Product Manager assignment</p>
+  <h1>The empty first week</h1>
+  <p class="byline">Luccas Evans</p>
+</section>
+
+<!-- 2 -->
+<section class="slide" data-t="0:05" data-cue="Point at the zeros. Onboarding collects ONE field: a project name. No client, no rate.">
+  <p class="eyebrow">What a new freelancer gets</p>
+  <div class="nums">
+    <div class="num"><span class="k">Logged</span><span class="v zero">0h</span></div>
+    <div class="num"><span class="k">Billable</span><span class="v zero">0h (0%)</span></div>
+    <div class="num"><span class="k">Amount</span><span class="v zero">$0.00</span></div>
+    <div class="num"><span class="k">Client</span><span class="v zero">—</span></div>
+  </div>
+  <p class="lede">Onboarding asks for one field: a project name.<br>Never who the client is. Never what the time is worth.</p>
+</section>
+
+<!-- 3 -->
+<section class="slide" data-t="0:20" data-cue="The killer detail. Reports said this WHILE a timer was running. The checklist ticked 'View your reports' as complete anyway.">
+  <p class="eyebrow">And when you do track</p>
+  <div class="quote">“No logged time” — while the timer was still running.</div>
+  <p class="lede">The coach mark promised the entry would appear on my calendar. It didn't. The calendar had opened on last week.</p>
+</section>
+
+<!-- 4 -->
+<section class="slide" data-t="0:30" data-cue="THE HINGE. Say it slowly. Then switch to the prototype tab.">
+  <p class="eyebrow">The reframe</p>
+  <h2>A freelancer who signs up on Wednesday has already worked Monday and Tuesday.</h2>
+  <p class="lede">Their week isn't empty — Toggl's record of it is.</p>
+</section>
+
+<!-- 5 -->
+<section class="slide" data-t="0:40" data-cue="SWITCH TO BROWSER. Empty state → paste the messy week → review → type the three rates → watch it hit $1,652.50 → confirm → open Reports. ~75s.">
+  <p class="eyebrow">Live in the prototype</p>
+  <h2>Catch&nbsp;Up</h2>
+  <p class="lede">Paste a spreadsheet, your notes, or type it from memory. Then say what each client is worth.</p>
+  <div class="nums">
+    <div class="num"><span class="k">Before</span><span class="v zero">$0.00</span></div>
+    <div class="num"><span class="k">After · 90 seconds</span><span class="v good">$1,652.50</span></div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="slide" data-t="1:55" data-cue="W0 is a hard filter — it kills profitability, scope creep, estimating from history. Instead of a smaller problem, capture contract shape early enough to answer the month-three question in week one.">
+  <p class="eyebrow">Prioritisation</p>
+  <h2>What I chose not to build</h2>
+  <ul>
+    <li class="out"><b>Ask for rates in onboarding</b> — <em>fails if they don't have them yet</em></li>
+    <li class="out"><b>Fix the first-session bugs</b> — <em>can't show an absence in 60s</em></li>
+    <li class="out"><b>Strip the team framing</b> — <em>ambient, not a moment</em></li>
+    <li><b>Reconstruct the week already worked</b></li>
+  </ul>
+</section>
+
+<!-- 7 -->
+<section class="slide" data-t="2:35" data-cue="Name the CSV importer: it already exists, buried in Admin settings, and has no concept of a rate — so even if you find it you land on zero. I surfaced it and routed it into the same review step.">
+  <p class="eyebrow">Tradeoffs</p>
+  <h2>Left on the table</h2>
+  <ul>
+    <li class="out">Invoicing — the obvious next step</li>
+    <li class="out">Profitability trends — can't exist in week one</li>
+    <li class="out">Team surfaces — wrong persona</li>
+    <li><b>AI guessing your day</b> — <em>you tell us, we don't guess</em></li>
+  </ul>
+</section>
+
+<!-- 8 -->
+<section class="slide" data-t="3:05" data-cue="Primary metric is near-zero today BY CONSTRUCTION. Then the commercial point: switchers already have revenue and a reason to pay.">
+  <p class="eyebrow">Impact</p>
+  <h2>What I'd measure</h2>
+  <ul>
+    <li><b>Non-zero Amount in week one</b> — <em>near-zero today by construction</em></li>
+    <li>D7 return, split by Catch Up completion</li>
+    <li><b>Trial→paid for switchers</b> — <em>they already have revenue</em></li>
+    <li class="out">Guardrail: imported entries later edited or deleted</li>
+  </ul>
+</section>
+
+<!-- 9 -->
+<section class="slide" data-t="3:50" data-cue="Two REAL overrides. It recommended onboarding fields — I killed it. It talked me out of the direction I built, claiming Toggl flagged it as overdone; the evidence didn't hold. Close with the last line.">
+  <p class="eyebrow">How I used AI</p>
+  <h2>Where I overruled it</h2>
+  <ul>
+    <li><b>Worked</b> — <em>audited the product, extracted their design system, built fast</em></li>
+    <li><b>Overrode</b> — <em>its onboarding-fields recommendation</em></li>
+    <li><b>Overrode</b> — <em>“that direction is overdone.” The evidence didn't hold</em></li>
+  </ul>
+  <p class="lede">It states a weak inference as confidently as a verified fact. Knowing which is which is the job.</p>
+</section>
+
+<!-- 10 -->
+<section class="slide" data-t="4:40" data-cue="Thank them. Stop recording.">
+  <p class="eyebrow">Thank you</p>
+  <h2>Catch&nbsp;Up</h2>
+  <div class="links">
+    <span>toggl-focus.vercel.app</span>
+    <span>github.com/evansluccas/toggl-focus-catch-up</span>
+  </div>
+</section>
+
+<div id="count"></div>
+<div id="clock">0:00</div>
+<div id="cue"><span class="t"></span><span class="c"></span></div>
+<div id="hint">T timer · S cues</div>
+
+<script>
+  const slides = [...document.querySelectorAll('.slide')];
+  const bar = document.getElementById('bar');
+  const count = document.getElementById('count');
+  const clock = document.getElementById('clock');
+  const cue = document.getElementById('cue');
+  const hint = document.getElementById('hint');
+  let i = 0, started = null, tick = null;
+
+  function show(n){
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, k) => s.classList.toggle('on', k === i));
+    bar.style.width = ((i + 1) / slides.length * 100) + '%';
+    count.textContent = (i + 1) + ' / ' + slides.length;
+    cue.querySelector('.t').textContent = slides[i].dataset.t;
+    cue.querySelector('.c').textContent = slides[i].dataset.cue;
+  }
+
+  function startClock(){
+    if (started) return;
+    started = Date.now();
+    tick = setInterval(() => {
+      const s = Math.floor((Date.now() - started) / 1000);
+      clock.textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+      clock.classList.toggle('over', s > 300);
+    }, 500);
+  }
+
+  addEventListener('keydown', e => {
+    if (['ArrowRight',' ','PageDown','Enter'].includes(e.key)) { e.preventDefault(); startClock(); show(i + 1); }
+    else if (['ArrowLeft','PageUp'].includes(e.key)) { e.preventDefault(); show(i - 1); }
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+    else if (e.key.toLowerCase() === 't') { startClock(); clock.classList.toggle('on'); }
+    else if (e.key.toLowerCase() === 's') cue.classList.toggle('on');
+    else if (e.key.toLowerCase() === 'r') { clearInterval(tick); started = null; clock.textContent = '0:00'; clock.classList.remove('over'); }
+    hint.style.display = 'none';
+  });
+
+  addEventListener('click', e => { if (e.clientX > innerWidth * 0.25) { startClock(); show(i + 1); } else show(i - 1); });
+  setTimeout(() => hint.style.opacity = '0', 6000);
+  show(0);
+</script>
+</body>
+</html>
