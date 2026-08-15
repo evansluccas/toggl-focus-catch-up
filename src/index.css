@@ -1,0 +1,149 @@
+@import "tailwindcss";
+
+/* ============================================================
+   Toggl Focus design tokens — extracted from focus.toggl.com
+   Dark theme only. RGB triplets, used as rgb(var(--token)).
+   ============================================================ */
+:root {
+  /* surfaces */
+  --background-primary: 28 26 28;
+  --background-primary-hover: 60 57 59;
+  --background-primary-active: 87 84 86;
+  --background-secondary: 19 18 19;
+  --background-secondary-hover: 28 26 28;
+  --background-secondary-active: 60 57 59;
+  --background-tertiary: 0 0 0;
+  --background-tertiary-hover: 19 18 19;
+  --background-dark: 60 57 59;
+  --background-dark-hover: 87 84 86;
+  --background-inverted: 255 255 255;
+
+  /* accent */
+  --background-accent: 194 130 185;
+  --background-accent-hover: 220 167 211;
+  --background-accent-active: 236 204 230;
+  --background-accent-disabled: 99 46 92;
+  --background-muted: 55 31 52;
+  --background-muted-hover: 66 36 62;
+  --background-muted-active: 99 46 92;
+  --foreground-accent: 194 130 185;
+  --foreground-accent-hover: 220 167 211;
+  --stroke-accent: 66 36 62;
+  --stroke-accent-hover: 99 46 92;
+  --stroke-accent-active: 168 76 157;
+  --color-accent-100: 236 133 254;
+
+  /* foregrounds */
+  --foreground-primary: 255 255 255;
+  --foreground-primary-disabled: 87 84 86;
+  --foreground-secondary: 179 176 178;
+  --foreground-secondary-hover: 207 205 207;
+  --foreground-tertiary: 87 84 86;
+  --foreground-tertiary-hover: 130 127 129;
+  --foreground-inverted: 19 18 19;
+
+  /* strokes */
+  --stroke-primary: 60 57 59;
+  --stroke-primary-hover: 87 84 86;
+  --stroke-secondary: 87 84 86;
+  --stroke-secondary-hover: 130 127 129;
+  --stroke-tertiary: 130 127 129;
+  --stroke-muted: 19 18 19;
+
+  /* status */
+  --background-affirmative: 70 148 77;
+  --background-affirmative-hover: 106 170 110;
+  --background-destructive: 175 62 48;
+  --background-stop-timer: 198 91 76;
+  --background-stop-timer-hover: 232 144 129;
+  --foreground-error: 250 184 172;
+  --foreground-success: 157 204 159;
+  --foreground-warning: 243 194 106;
+  --background-success: 18 61 23;
+  --stroke-success: 30 112 42;
+
+  /* on-surface */
+  --on-surface-hover: rgba(255 255 255 / 0.12);
+  --on-surface-active: rgba(255 255 255 / 0.2);
+
+  /* elevation */
+  --elevation-raised-10: #00000052;
+  --elevation-raised-20: #00000063;
+  --elevation-raised-50: #00000080;
+}
+
+@theme inline {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji";
+
+  /* surfaces → bg-surface, bg-surface-2 … */
+  --color-surface: rgb(var(--background-primary));
+  --color-surface-hover: rgb(var(--background-primary-hover));
+  --color-surface-active: rgb(var(--background-primary-active));
+  --color-surface-2: rgb(var(--background-secondary));
+  --color-surface-2-hover: rgb(var(--background-secondary-hover));
+  --color-surface-3: rgb(var(--background-tertiary));
+  --color-surface-3-hover: rgb(var(--background-tertiary-hover));
+  --color-raised: rgb(var(--background-dark));
+  --color-raised-hover: rgb(var(--background-dark-hover));
+  --color-inverted: rgb(var(--background-inverted));
+
+  /* text → text-fg, text-fg-2, text-fg-3 */
+  --color-fg: rgb(var(--foreground-primary));
+  --color-fg-2: rgb(var(--foreground-secondary));
+  --color-fg-2-hover: rgb(var(--foreground-secondary-hover));
+  --color-fg-3: rgb(var(--foreground-tertiary));
+  --color-fg-3-hover: rgb(var(--foreground-tertiary-hover));
+  --color-fg-inverted: rgb(var(--foreground-inverted));
+
+  /* accent */
+  --color-accent: rgb(var(--background-accent));
+  --color-accent-hover: rgb(var(--background-accent-hover));
+  --color-accent-active: rgb(var(--background-accent-active));
+  --color-accent-bright: rgb(var(--color-accent-100));
+  --color-muted: rgb(var(--background-muted));
+  --color-muted-hover: rgb(var(--background-muted-hover));
+  --color-muted-active: rgb(var(--background-muted-active));
+
+  /* strokes → border-line, border-line-2 … */
+  --color-line: rgb(var(--stroke-primary));
+  --color-line-hover: rgb(var(--stroke-primary-hover));
+  --color-line-2: rgb(var(--stroke-secondary));
+  --color-line-2-hover: rgb(var(--stroke-secondary-hover));
+  --color-line-3: rgb(var(--stroke-tertiary));
+  --color-line-accent: rgb(var(--stroke-accent));
+
+  /* status */
+  --color-affirmative: rgb(var(--background-affirmative));
+  --color-affirmative-hover: rgb(var(--background-affirmative-hover));
+  --color-stop: rgb(var(--background-stop-timer));
+  --color-stop-hover: rgb(var(--background-stop-timer-hover));
+  --color-success-fg: rgb(var(--foreground-success));
+  --color-error-fg: rgb(var(--foreground-error));
+  --color-warning-fg: rgb(var(--foreground-warning));
+
+  --tracking-wide: 0.025em;
+  --default-transition-duration: 0.15s;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-surface-3 font-sans text-[14px] leading-5 text-fg antialiased;
+  overscroll-behavior: none;
+}
+
+/* thin scrollbars like the real app */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--background-primary-active)) transparent;
+}
+
+/* utility: uppercase section label */
+.section-label {
+  @apply text-[11px] font-semibold uppercase tracking-wide text-fg-2;
+}
