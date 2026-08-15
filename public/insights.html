@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Why a new freelancer's first week in Toggl Focus pays out nothing, and the Catch Up prototype that fixes it.">
+<meta property="og:title" content="The Empty First Week">
+<meta property="og:description" content="Toggl Focus PM assignment - the W0 audit, the decision, and the Catch Up prototype.">
+<title>The Empty First Week</title>
+<style>
+  /* ---- tokens: light is the base set ---- */
+  :root {
+    --ground: #FBFAFC;
+    --ground-raised: #FFFFFF;
+    --ground-sunk: #F3F1F5;
+    --ink: #1A171C;
+    --ink-muted: #6B6570;
+    --ink-faint: #9A939F;
+    --rule: #E4E0E8;
+    --rule-strong: #CFC9D4;
+    --accent: #A84C9D;
+    --accent-soft: #F6E5F3;
+    --money: #2F863A;
+    --money-soft: #E4F1E5;
+    --flag: #8A5B00;
+    --flag-soft: #FBF0DA;
+    --shadow: 0 1px 2px rgba(26, 23, 28, .05), 0 8px 24px -12px rgba(26, 23, 28, .12);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #131213;
+      --ground-raised: #1C1A1C;
+      --ground-sunk: #0C0B0C;
+      --ink: #FFFFFF;
+      --ink-muted: #B3B0B2;
+      --ink-faint: #827F81;
+      --rule: #3C393B;
+      --rule-strong: #575456;
+      --accent: #C282B9;
+      --accent-soft: #371F34;
+      --money: #9DCC9F;
+      --money-soft: #123D17;
+      --flag: #F3C26A;
+      --flag-soft: #3A2E12;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -12px rgba(0, 0, 0, .6);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #131213;
+    --ground-raised: #1C1A1C;
+    --ground-sunk: #0C0B0C;
+    --ink: #FFFFFF;
+    --ink-muted: #B3B0B2;
+    --ink-faint: #827F81;
+    --rule: #3C393B;
+    --rule-strong: #575456;
+    --accent: #C282B9;
+    --accent-soft: #371F34;
+    --money: #9DCC9F;
+    --money-soft: #123D17;
+    --flag: #F3C26A;
+    --flag-soft: #3A2E12;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -12px rgba(0, 0, 0, .6);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 45rem;
+    margin: 0 auto;
+    padding: clamp(3rem, 8vw, 6rem) clamp(1.25rem, 5vw, 2rem) 6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3.5rem;
+  }
+
+  /* ---- masthead ---- */
+  .masthead { display: flex; flex-direction: column; gap: 1.25rem; }
+
+  .kicker {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: .72rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0;
+  }
+
+  h1 {
+    font-size: clamp(2.1rem, 6vw, 3.1rem);
+    line-height: 1.05;
+    letter-spacing: -.035em;
+    font-weight: 700;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .standfirst {
+    font-size: 1.1875rem;
+    line-height: 1.6;
+    color: var(--ink-muted);
+    margin: 0;
+    text-wrap: pretty;
+  }
+
+  .byline {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: .78rem;
+    color: var(--ink-faint);
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--rule);
+  }
+  .byline a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+
+  /* ---- sections ---- */
+  section { display: flex; flex-direction: column; gap: 1.1rem; }
+
+  .eyebrow {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: .7rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0;
+    padding-bottom: .75rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  h2 {
+    font-size: 1.6rem;
+    line-height: 1.2;
+    letter-spacing: -.022em;
+    font-weight: 660;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  h3 {
+    font-size: 1.0625rem;
+    font-weight: 650;
+    margin: 1rem 0 0;
+    letter-spacing: -.008em;
+  }
+
+  p { margin: 0; text-wrap: pretty; }
+  strong { font-weight: 640; }
+  em { font-style: italic; color: var(--ink-muted); }
+
+  ul { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: .55rem; }
+  li::marker { color: var(--ink-faint); }
+
+  /* ---- the ledger: before / after ---- */
+  .ledger {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  @media (max-width: 34rem) { .ledger { grid-template-columns: 1fr; } }
+
+  .ledger-col { background: var(--ground-raised); padding: 1.25rem 1.35rem 1.4rem; }
+  .ledger-col.after { background: var(--ground-raised); }
+
+  .ledger-head {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: .68rem;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    padding-bottom: .9rem;
+    margin-bottom: .35rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .ledger-col.after .ledger-head { color: var(--accent); }
+
+  .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    padding: .5rem 0;
+    border-bottom: 1px solid var(--rule);
+    font-size: .875rem;
+  }
+  .row:last-child { border-bottom: 0; }
+  .row .label { color: var(--ink-muted); }
+  .row .val {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: .875rem;
+  }
+  .val.zero { color: var(--ink-faint); }
+  .val.good { color: var(--money); font-weight: 600; }
+  .val.big { font-size: 1.05rem; font-weight: 650; }
+
+  /* ---- pull quote ---- */
+  .quote {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    border-radius: 0 8px 8px 0;
+    padding: 1.1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+  }
+  .quote p { font-size: 1.0625rem; }
+  .quote .src {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: .7rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+  }
+
+  /* ---- finding list ---- */
+  .findings { display: flex; flex-direction: column; gap: 0; border-top: 1px solid var(--rule); }
+  .finding {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0 1rem;
+    padding: .95rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .finding .tag {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: .68rem;
+    letter-spacing: .06em;
+    color: var(--ink-faint);
+    padding-top: .28rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .finding p { font-size: .9375rem; }
+
+  /* ---- table ---- */
+  .scroll { overflow-x: auto; border: 1px solid var(--rule); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; font-size: .875rem; min-width: 30rem; }
+  th, td { text-align: left; padding: .7rem .85rem; border-bottom: 1px solid var(--rule); }
+  thead th {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: .66rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 400;
+    background: var(--ground-sunk);
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.pick { color: var(--money); font-weight: 600; }
+  td.drop { color: var(--ink-faint); }
+
+  /* ---- callout ---- */
+  .note {
+    background: var(--ground-sunk);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 1.1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+    font-size: .9375rem;
+  }
+  .note .note-head {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: .68rem;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+    color: var(--flag);
+  }
+
+  code {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: .86em;
+    background: var(--ground-sunk);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: .08em .35em;
+  }
+
+  .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+  .metric { background: var(--ground-raised); padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: .3rem; }
+  .metric .m-label { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; font-size: .66rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); }
+  .metric .m-body { font-size: .875rem; color: var(--ink-muted); }
+
+  footer {
+    border-top: 1px solid var(--rule);
+    padding-top: 1.5rem;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: .74rem;
+    color: var(--ink-faint);
+    line-height: 1.7;
+  }
+  footer a { color: var(--accent); }
+
+  a:focus-visible, :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="kicker">Toggl Focus · Product Manager assignment</p>
+    <h1>The empty first week</h1>
+    <p class="standfirst">
+      A new freelancer can do everything Toggl Focus asks of them in week one — pick a use case,
+      name a project, run a timer, open reports — and still be shown a blank chart, a dash where the
+      client should be, and <strong>$0.00 earned</strong>. Not because they tracked too little.
+      Because onboarding never asked the two questions that make their time mean anything.
+    </p>
+    <p class="byline">
+      <span>Luccas Evans</span>
+      <span>Prototype: <a href="https://github.com/evansluccas/toggl-focus-catch-up">source on GitHub</a></span>
+      <span>Persona: freelancer</span>
+    </p>
+  </header>
+
+  <section>
+    <p class="eyebrow">What I did</p>
+    <h2>I signed up and watched week one fail</h2>
+    <p>
+      I created a fresh account and walked the entire first run as a freelancer would — choosing
+      <em>"See where time goes"</em> at the fork, skipping the calendar connection the way most people
+      will, naming one project, starting a timer, and following the product's own checklist to
+      reports. Everything below is what I saw, not what I assumed.
+    </p>
+
+    <div class="findings">
+      <div class="finding">
+        <span class="tag">01</span>
+        <p><strong>Onboarding's only payoff is calendar import — and it's all-or-nothing.</strong>
+        Step two leads with Google and Outlook, and auto-track defaults to on. Toggl has clearly
+        identified "forgetting to track" as the core new-user problem. But it's the sole
+        value-delivery mechanism in the flow, and it asks for an OAuth grant from someone who met
+        the company ninety seconds ago. Skip it and onboarding delivers nothing at all.</p>
+      </div>
+      <div class="finding">
+        <span class="tag">02</span>
+        <p><strong>It collects one field: a project name.</strong> No client, no rate, no billable
+        flag. Afterwards the Projects table shows Client, Billable, Rate and Fixed fee all empty, and
+        the project picker files it under a group literally labelled <em>"No client"</em> — the one
+        dimension a freelance business is organised around.</p>
+      </div>
+      <div class="finding">
+        <span class="tag">03</span>
+        <p><strong>The first calendar load opened on last week.</strong> A brand-new account's first
+        impression of the core canvas was an empty grid for a week that had already passed.</p>
+      </div>
+      <div class="finding">
+        <span class="tag">04</span>
+        <p><strong>Reports read "No logged time" while a timer was running.</strong> One minute
+        twenty-three seconds on the clock, the entry plainly visible on the calendar, and every
+        metric showed 0h. The checklist ticked <em>"View your reports"</em> as complete anyway — for
+        visiting.</p>
+      </div>
+    </div>
+
+    <div class="quote">
+      <p>"Press play to start tracking — your timer starts running and <strong>the entry appears on
+      your calendar</strong>."</p>
+      <span class="src">Toggl Focus coach mark. The entry did not appear — the calendar was on last week.</span>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">The problem, stated precisely</p>
+    <h2>Three of the four headline numbers are zero by construction</h2>
+    <p>
+      After doing everything correctly, this is the freelancer's payoff. It isn't a reporting bug.
+      Amount can only ever read $0.00, because no rate was ever requested. Client can only ever read
+      a dash, because no client was ever requested.
+    </p>
+
+    <div class="ledger">
+      <div class="ledger-col">
+        <div class="ledger-head">Today · after full onboarding</div>
+        <div class="row"><span class="label">Logged time</span><span class="val zero">2m</span></div>
+        <div class="row"><span class="label">Billable time</span><span class="val zero">0h (0%)</span></div>
+        <div class="row"><span class="label">Amount</span><span class="val zero big">0.00 USD</span></div>
+        <div class="row"><span class="label">Client</span><span class="val zero">—</span></div>
+      </div>
+      <div class="ledger-col after">
+        <div class="ledger-head">With Catch Up · same freelancer</div>
+        <div class="row"><span class="label">Logged time</span><span class="val">21h 15m</span></div>
+        <div class="row"><span class="label">Billable time</span><span class="val">20h 15m (95%)</span></div>
+        <div class="row"><span class="label">Amount</span><span class="val good big">1,652.50 USD</span></div>
+        <div class="row"><span class="label">Clients</span><span class="val">3</span></div>
+      </div>
+    </div>
+
+    <p>
+      The reframe that unlocked this: <strong>a freelancer who signs up on Wednesday has already
+      worked Monday and Tuesday.</strong> Their week isn't empty — Toggl's record of it is. That gap
+      is the product problem, and closing it needs no integration and no waiting.
+    </p>
+  </section>
+
+  <section>
+    <p class="eyebrow">Prioritisation</p>
+    <h2>What I chose not to build</h2>
+    <p>
+      The W0 constraint is a hard filter, and it eliminates most of the pains in the brief. Knowing
+      which client is profitable, estimating from historical data, defending scope against a
+      contract — all need months of history. So I took the brief's challenge literally: rather than
+      pick a smaller problem to fit the window, <strong>capture the contract shape early enough that
+      the month-three questions can be answered in week one.</strong>
+    </p>
+
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Candidate</th><th>Verdict</th><th>Why</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Reconstruct the week you already worked</td>
+            <td class="pick">Built</td>
+            <td>Value in minute one; no data dependency; serves the majority who skip OAuth</td>
+          </tr>
+          <tr>
+            <td>Ask for client, rate &amp; budget during onboarding</td>
+            <td class="drop">Rejected</td>
+            <td>Fails when the freelancer doesn't have or won't share it — longer onboarding, same $0.00</td>
+          </tr>
+          <tr>
+            <td>Fix the first-session bugs</td>
+            <td class="drop">Folded in</td>
+            <td>Real, but you can't show the absence of an annoyance in sixty seconds</td>
+          </tr>
+          <tr>
+            <td>"Solo mode" — strip the team framing</td>
+            <td class="drop">Rejected</td>
+            <td>Right instinct, but it's ambient improvement, not a week-one moment</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="note-head">Prior art I found, and why it doesn't solve this</span>
+      <p>
+        Toggl already has a Universal CSV Importer — buried in <strong>Admin settings → Data
+        import</strong>, positioned for migration from Harvest, Clockify and ClickUp. So the
+        capability to bulk-create projects and entries exists. But it's hidden where a week-one
+        freelancer will never look, it demands a file and per-column mapping, it speaks in
+        IT-migration language (<em>"map data", "match existing records"</em>, with <em>Members</em>
+        as the first entity type offered to a solo user), and <strong>Clients aren't an importable
+        entity at all.</strong> Catch Up isn't a new capability — it's a freelancer-shaped front door
+        on one Toggl already built and hid.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">The solution</p>
+    <h2>Catch Up</h2>
+    <p>
+      One flow, several on-ramps, one payoff. The calendar's empty state stops being a void and
+      becomes an invitation: <em>your week isn't empty, Toggl's just new here.</em> Then a single box
+      accepts whatever the freelancer has — spreadsheet rows pasted from Excel, notes-app text, or
+      typing from memory. No "do you have a file?" question, because that question excludes people.
+    </p>
+
+    <h3>The one decision that carries it</h3>
+    <p>
+      The rate is asked for <strong>at the moment it pays off, not up front.</strong> When you say
+      "three hours, Acme," that's the instant to ask what you bill Acme — because the answer
+      immediately becomes money on screen rather than a field you fill in for a reason you'll
+      discover later. The billable total updates live as you type, so the user <em>causes</em> the
+      reveal instead of being shown it: $0.00 → $977.50 → $1,652.50.
+    </p>
+    <p>
+      And it degrades instead of collapsing. Skip the rates entirely and you still get your hours
+      organised by client — which is more than the product gives you today.
+    </p>
+
+    <h3>Tolerant of format, conservative about meaning</h3>
+    <p>
+      The parser handles mixed durations (<code>3h</code>, <code>1.5</code>,
+      <code>09:00-12:30</code>, <code>45m</code>), inconsistent casing (<code>acme</code> and
+      <code>Acme</code> become one client), and tab characters from a spreadsheet. But when it can't
+      confidently read a line, it says so and marks it for you rather than inventing structure. Two
+      bugs I found while testing pushed in exactly that direction: a prose note was turning its first
+      word into a phantom client, and single-spaced input was splitting "Beta Corp" into "Beta".
+      Both are fixed, and the principle they taught is in the code.
+    </p>
+  </section>
+
+  <section>
+    <p class="eyebrow">Tradeoffs</p>
+    <h2>What I left on the table</h2>
+    <ul>
+      <li><strong>CSV upload with column mapping.</strong> Linked, not rebuilt — requiring a file
+        recreates the same dependency failure that killed the onboarding-fields approach.</li>
+      <li><strong>Invoicing.</strong> The obvious next step once money is on screen, and firmly a
+        week-two problem.</li>
+      <li><strong>Profitability trends.</strong> Cannot exist in week one by definition.</li>
+      <li><strong>AI inference of your day</strong> from browser history or documents. Deliberate:
+        the user tells us, we don't guess. That's what keeps this honest and out of the
+        much-travelled "let AI categorise your day" territory.</li>
+      <li><strong>Team surfaces</strong> — approvals, capacity, member breakdowns. Wrong persona.</li>
+    </ul>
+  </section>
+
+  <section>
+    <p class="eyebrow">Impact</p>
+    <h2>What I'd expect, and how I'd know</h2>
+    <p>
+      I'd ship this as an A/B test on the calendar empty state and read four things. The commercial
+      argument matters as much as the activation one: <strong>a freelancer with a live contract is
+      the better signup</strong> — they already have revenue and a reason to pay — and they're
+      precisely the person who arrives with a week's work already behind them.
+    </p>
+
+    <div class="metric-grid">
+      <div class="metric">
+        <span class="m-label">Primary</span>
+        <span class="m-body">Share of new signups with a non-zero <strong>Amount</strong> in their first week. Today this is near-zero by construction.</span>
+      </div>
+      <div class="metric">
+        <span class="m-label">Retention</span>
+        <span class="m-body">D7 return rate, split by whether the user completed Catch Up.</span>
+      </div>
+      <div class="metric">
+        <span class="m-label">Habit</span>
+        <span class="m-body">Reaching three or more entries across two or more separate days in week one.</span>
+      </div>
+      <div class="metric">
+        <span class="m-label">Commercial</span>
+        <span class="m-body">Trial-to-paid conversion for the switcher segment specifically.</span>
+      </div>
+    </div>
+
+    <h3>Guardrails I'd watch</h3>
+    <p>
+      Onboarding completion must not move, since we added no steps to it. And I'd watch the share of
+      Catch Up entries later edited or deleted — if that's high, the parser is guessing too
+      confidently and quietly costing people trust, which is worse than an empty week.
+    </p>
+  </section>
+
+  <section>
+    <p class="eyebrow">Assumptions</p>
+    <h2>What I'm taking on faith</h2>
+    <ul>
+      <li><strong>Most new signups skip the calendar connection.</strong> I'd validate this on day
+        one; it's the single number this whole argument rests on. My reasoning is that it's an OAuth
+        grant into a relationship ninety seconds old.</li>
+      <li><strong>Most freelancers arrive with a live contract and some record of their time</strong>
+        — a spreadsheet, notes, paper, or another tracker. Anyone billing a client must be keeping
+        something, or they couldn't invoice.</li>
+      <li><strong>Having a record isn't the same as handing it over.</strong> Some will decline to
+        upload anything on day one, for the same trust reason they skip OAuth. Hence the typed path.</li>
+      <li><strong>The CSV importer sees almost no week-one use</strong>, given where it lives.</li>
+    </ul>
+  </section>
+
+  <section>
+    <p class="eyebrow">Method</p>
+    <h2>How I used AI, and where I overruled it</h2>
+    <p>
+      I used Claude throughout — to drive the browser through onboarding and capture the audit, to
+      extract Toggl's real design tokens and icons so the prototype sits inside their system rather
+      than approximating it, and to build. The product judgment stayed mine, and the two moments that
+      mattered most were both disagreements.
+    </p>
+    <p>
+      <strong>It recommended the wrong direction first.</strong> Claude argued for capturing client,
+      rate and budget during onboarding. I pushed back: if the freelancer doesn't have that
+      information yet, or won't share it, we've made onboarding longer and delivered the same empty
+      result — a net loss on the exact metric we're optimising. That objection killed the
+      recommendation, and the good idea inside it (rate becomes money) got relocated to where it
+      actually pays off.
+    </p>
+    <p>
+      <strong>It talked me out of the eventual winner, on a claim it couldn't support.</strong> Claude
+      asserted that day reconstruction was the direction Toggl had flagged as overdone. When I asked
+      for the evidence, it didn't hold — what was flagged was reviewing and categorising time that's
+      already logged, which is a different problem from creating a record that was never captured. It
+      also argued "Toggl already bet on calendar import here", which contradicted its own finding
+      that import fails closed for everyone who skips it. Both corrections reopened the direction I
+      built.
+    </p>
+    <p>
+      The lesson I'd carry into the role: AI is exceptional at breadth and speed — it audited a
+      product and rebuilt its design system in an afternoon — and it will state a weak inference with
+      the same confidence as a verified fact. The judgment worth paying for is knowing which is which.
+    </p>
+  </section>
+
+  <footer>
+    Grounded in a real Toggl Focus account, August 2026 · Prototype source:
+    <a href="https://github.com/evansluccas/toggl-focus-catch-up">github.com/evansluccas/toggl-focus-catch-up</a>
+  </footer>
+
+</div>
+</body>
+</html>
