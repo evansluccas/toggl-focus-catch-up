@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { Button, IconButton, PageHeader, ProjectDot, cx } from "../components/ui";
+import { Link } from "react-router-dom";
+import {
+  Button,
+  IconButton,
+  PageHeader,
+  ProjectDot,
+  cx,
+} from "../components/ui";
 import { Icon } from "../icons";
 import { useStore } from "../store";
 import {
@@ -24,9 +31,12 @@ export default function ReportsPage() {
     return rate != null ? sum + (durationMinutes(e) / 60) * rate : sum;
   }, 0);
   const activeDays = new Set(logged.map((e) => e.day)).size || 1;
+  const isEmpty = totalMin === 0;
 
   const perDay = Array.from({ length: 7 }, (_, d) =>
-    logged.filter((e) => e.day === d).reduce((s, e) => s + durationMinutes(e), 0),
+    logged
+      .filter((e) => e.day === d)
+      .reduce((s, e) => s + durationMinutes(e), 0),
   );
   const maxDay = Math.max(...perDay, 60);
   const scaleTop = Math.ceil(maxDay / 60) * 60;
@@ -43,7 +53,10 @@ export default function ReportsPage() {
     .sort((a, b) => b.mins - a.mins);
 
   const stats = [
-    { label: "Logged time", value: totalMin ? formatDuration(totalMin * 60) : "0h" },
+    {
+      label: "Logged time",
+      value: totalMin ? formatDuration(totalMin * 60) : "0h",
+    },
     {
       label: "Billable time",
       value: billableMin ? formatDuration(billableMin * 60) : "0h",
@@ -150,6 +163,29 @@ export default function ReportsPage() {
                     />
                   </div>
                 ))}
+
+                {isEmpty && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-center">
+                    <p className="text-lg font-semibold text-fg">
+                      No logged time
+                    </p>
+                    <p className="text-sm text-fg-2">
+                      <Link
+                        to="/calendar"
+                        className="text-fg-2 underline underline-offset-2 transition-colors hover:text-fg"
+                      >
+                        Schedule
+                      </Link>{" "}
+                      or{" "}
+                      <Link
+                        to="/calendar"
+                        className="text-fg-2 underline underline-offset-2 transition-colors hover:text-fg"
+                      >
+                        log time
+                      </Link>
+                    </p>
+                  </div>
+                )}
               </div>
               <div className="mt-2 flex gap-2">
                 {perDay.map((_, d) => (
@@ -167,10 +203,12 @@ export default function ReportsPage() {
             </div>
           </div>
 
-          <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-fg-2">
-            <span className="h-2 w-4 rounded-sm bg-accent" />
-            Logged time
-          </div>
+          {!isEmpty && (
+            <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-fg-2">
+              <span className="h-2 w-4 rounded-sm bg-accent" />
+              Logged time
+            </div>
+          )}
         </div>
 
         {/* breakdown */}
@@ -184,51 +222,67 @@ export default function ReportsPage() {
               <Button trailingIcon="chevronDown">Project</Button>
             </div>
           </div>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-y border-line text-[11px] font-semibold tracking-wide text-fg-2 uppercase">
-                <th className="px-5 py-2.5 text-left">Project</th>
-                <th className="px-5 py-2.5 text-left">Client</th>
-                <th className="px-5 py-2.5 text-right">Logged time</th>
-                <th className="px-5 py-2.5 text-right">Billable</th>
-                <th className="px-5 py-2.5 text-right">Amount</th>
-                <th className="px-5 py-2.5 text-right">Billable %</th>
-              </tr>
-            </thead>
-            <tbody>
-              {perProject.map(({ project, mins, bill }) => (
-                <tr
-                  key={project.id}
-                  className="border-b border-line/60 last:border-0 hover:bg-white/[0.03]"
+
+          {isEmpty ? (
+            <div className="flex flex-col items-center justify-center gap-1 px-5 pb-16 text-center">
+              <p className="text-lg font-semibold text-fg">No logged time</p>
+              <p className="text-sm text-fg-2">
+                <Link
+                  to="/calendar"
+                  className="text-fg-2 underline underline-offset-2 transition-colors hover:text-fg"
                 >
-                  <td className="px-5 py-3">
-                    <span className="flex items-center gap-2">
-                      <ProjectDot color={project.color} />
-                      <span className="text-fg">{project.name}</span>
-                    </span>
-                  </td>
-                  <td className="px-5 py-3 text-fg-2">
-                    {project.client ?? "–"}
-                  </td>
-                  <td className="px-5 py-3 text-right tabular-nums text-fg">
-                    {formatDuration(mins * 60)}
-                  </td>
-                  <td className="px-5 py-3 text-right tabular-nums text-fg-2">
-                    {formatDuration(bill * 60)}
-                  </td>
-                  <td className="px-5 py-3 text-right tabular-nums text-fg">
-                    {formatMoney(
-                      project.rate != null ? (mins / 60) * project.rate : 0,
-                    )}
-                    <span className="ml-1 text-fg-2">USD</span>
-                  </td>
-                  <td className="px-5 py-3 text-right tabular-nums text-fg-2">
-                    {Math.round((bill / mins) * 100)}%
-                  </td>
+                  Log time
+                </Link>{" "}
+                to see where your time goes
+              </p>
+            </div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-y border-line text-[11px] font-semibold tracking-wide text-fg-2 uppercase">
+                  <th className="px-5 py-2.5 text-left">Project</th>
+                  <th className="px-5 py-2.5 text-left">Client</th>
+                  <th className="px-5 py-2.5 text-right">Logged time</th>
+                  <th className="px-5 py-2.5 text-right">Billable</th>
+                  <th className="px-5 py-2.5 text-right">Amount</th>
+                  <th className="px-5 py-2.5 text-right">Billable %</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {perProject.map(({ project, mins, bill }) => (
+                  <tr
+                    key={project.id}
+                    className="border-b border-line/60 last:border-0 hover:bg-white/[0.03]"
+                  >
+                    <td className="px-5 py-3">
+                      <span className="flex items-center gap-2">
+                        <ProjectDot color={project.color} />
+                        <span className="text-fg">{project.name}</span>
+                      </span>
+                    </td>
+                    <td className="px-5 py-3 text-fg-2">
+                      {project.client ?? "–"}
+                    </td>
+                    <td className="px-5 py-3 text-right tabular-nums text-fg">
+                      {formatDuration(mins * 60)}
+                    </td>
+                    <td className="px-5 py-3 text-right tabular-nums text-fg-2">
+                      {formatDuration(bill * 60)}
+                    </td>
+                    <td className="px-5 py-3 text-right tabular-nums text-fg">
+                      {formatMoney(
+                        project.rate != null ? (mins / 60) * project.rate : 0,
+                      )}
+                      <span className="ml-1 text-fg-2">USD</span>
+                    </td>
+                    <td className="px-5 py-3 text-right tabular-nums text-fg-2">
+                      {Math.round((bill / mins) * 100)}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </>
